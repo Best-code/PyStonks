@@ -1,0 +1,752 @@
+12/13/2020 code
+
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Dec 10 22:00:58 2020
+
+@author: Colin
+"""
+
+#amzn nlok crm msft
+
+import pandas as pd
+import locale
+import matplotlib.pyplot as plt
+import numpy as np
+
+locale.setlocale( locale.LC_ALL, '' )
+
+nlokDf = pd.read_csv('nlok.csv')
+
+aaplDf = pd.read_csv('UPDATEDNOTORIGINAL.csv')
+# aaplaaplDf['apl30'] = aaplDf['Close'].rolling(window = 30).mean().round(2)
+aaplAssetType = 'cash'
+yesterdayExcess = 0
+aaplExcessArray = []
+aaplCapital = 10000
+startingAaplCapital = aaplCapital
+aaplSharesOwned = 0
+# aaplDf.insert(2,'Balance',aaplCapital)
+#What percent you need to reach to initiate buy
+percentOfRollingDown=0.9 #0.9 !!! DO NOT SET TO 1 !!!
+#What percent the price needs to go up for you to actually sell now
+dropSafeDown=0.85 #0.85
+#What percent you need to reach to initiate sell
+percentOfRollingUp=1.1 #1.1 !!! DO NOT SET TO 1 !!!
+#What percent the price needs to go up for you to actually buy now
+dropSafeUp=1.15 #1.15
+aaplBuyCount = 0
+aaplSellCount = 0
+
+for x in range(29,len(aaplDf)):
+    if(aaplAssetType=='cash'):
+        #Todays close = todays Close
+        todayClose=aaplDf['Close'].loc[x]
+        aaplDf['Balance'][x]=aaplCapital
+        #Todays 30avg = todays 30avg
+        today30=aaplDf['apl30'].loc[x]
+        #If todays Close is 10% more than the 30 day mean initiate buy
+        if(todayClose <= today30*percentOfRollingDown):
+            #Excess is the ammount you closed at minus 10% of the rolling avg
+            todayExcess = (today30*percentOfRollingDown)-todayClose
+            aaplExcessArray.append(todayExcess)
+            if(todayExcess < max(aaplExcessArray)*dropSafeUp):
+                aaplSharesOwned=(aaplCapital/todayClose)
+                #print("   SPENT " + str(locale.currency(aaplCapital,grouping=True)) + " for  " + str(aaplSharesOwned.round(2)) + " shares " + str(x))
+                aaplCapital=0
+                aaplAssetType='stocks'
+                aaplExcessArray = []
+                aaplBuyCount+=1
+    else:
+                                        #Todays close = todays Close
+        todayClose=aaplDf['Close'].loc[x]
+        aaplDf['Balance'][x]=aaplSharesOwned*todayClose                                                                                 #Todays 30avg = todays 30avg
+        today30=aaplDf['apl30'].loc[x]                                     #If todays Close is 10% more than the 30 day mean initiate sell
+        if(todayClose <= today30*percentOfRollingUp):
+                                                                                    #Excess is the ammount you closed at minus 110% of the rolling avg
+            todayExcess = todayClose-(today30*percentOfRollingUp)
+            aaplExcessArray.append(todayExcess)
+            if(todayExcess > min(aaplExcessArray)*dropSafeDown):
+                aaplCapital = (todayClose*aaplSharesOwned)
+                #print("RETURNED " + str(locale.currency(aaplCapital,grouping=True)) + " from " + str(aaplSharesOwned.round(2))+" shares\n" + str(x))
+                aaplSharesOwned=0
+                aaplAssetType='cash'
+                aaplExcessArray = []  
+                aaplSellCount += 1
+
+balanceX=[]
+for x in nlokDf['Date']:
+    balanceX.append(x)
+
+balanceY = []
+for x in aaplDf['Balance']:
+    balanceY.append(x)
+
+#plt.plot(balanceX,balanceY,label='aapl')
+
+###############################MSFT
+msftDf = pd.read_csv('msft.csv')
+msftDf['msft30'] = msftDf['Close'].rolling(window = 30).mean().round(2)
+msftAssetType = 'cash'
+yesterdayExcess = 0
+msftExcessArray = []
+msftCapital = 10000
+startingmsftCapital = msftCapital
+msftSharesOwned = 0
+msftDf.insert(2,'Balance',msftCapital)
+#What percent you need to reach to initiate buy
+percentOfRollingDown=0.9 #0.9 !!! DO NOT SET TO 1 !!!
+#What percent the price needs to go up for you to actually sell now
+dropSafeDown=0.85 #0.85
+#What percent you need to reach to initiate sell
+percentOfRollingUp=1.1 #1.1 !!! DO NOT SET TO 1 !!!
+#What percent the price needs to go up for you to actually buy now
+dropSafeUp=1.15 #1.15
+msftBuyCount = 0
+msftSellCount = 0
+
+for x in range(29,len(msftDf)):
+    if(msftAssetType=='cash'):
+        #Todays close = todays Close
+        todayClose=msftDf['Close'].loc[x]
+        msftDf['Balance'][x]=msftCapital
+        #Todays 30avg = todays 30avg
+        today30=msftDf['msft30'].loc[x]
+        #If todays Close is 10% more than the 30 day mean initiate buy
+        if(todayClose <= today30*percentOfRollingDown):
+            #Excess is the ammount you closed at minus 10% of the rolling avg
+            todayExcess = (today30*percentOfRollingDown)-todayClose
+            msftExcessArray.append(todayExcess)
+            if(todayExcess < max(msftExcessArray)*dropSafeUp):
+                msftSharesOwned=(msftCapital/todayClose)
+                #print("   SPENT " + str(locale.currency(msftCapital,grouping=True)) + " for  " + str(msftSharesOwned.round(2)) + " shares " + str(x))
+                msftCapital=0
+                msftAssetType='stocks'
+                msftExcessArray = []
+                msftBuyCount+=1
+    else:
+                                        #Todays close = todays Close
+        todayClose=msftDf['Close'].loc[x]
+        msftDf['Balance'][x]=msftSharesOwned*todayClose                                                                                 #Todays 30avg = todays 30avg
+        today30=msftDf['msft30'].loc[x]                                     #If todays Close is 10% more than the 30 day mean initiate sell
+        if(todayClose <= today30*percentOfRollingUp):
+                                                                                    #Excess is the ammount you closed at minus 110% of the rolling avg
+            todayExcess = todayClose-(today30*percentOfRollingUp)
+            msftExcessArray.append(todayExcess)
+            if(todayExcess > min(msftExcessArray)*dropSafeDown):
+                msftCapital = (todayClose*msftSharesOwned)
+                #print("RETURNED " + str(locale.currency(msftCapital,grouping=True)) + " from " + str(msftSharesOwned.round(2))+" shares " + str(x))
+                msftSharesOwned=0
+                msftAssetType='cash'
+                msftExcessArray = []  
+                msftSellCount += 1
+
+balanceX=[]
+for x in msftDf['Date']:
+    balanceX.append(x)
+
+balanceY = []
+for x in msftDf['Balance']:
+    balanceY.append(x)
+    
+#plt.plot(balanceX,balanceY,label='msft')
+
+###############################CRM
+crmDf = pd.read_csv('crm.csv')
+crmDf['crm30'] = crmDf['Close'].rolling(window = 30).mean().round(2)
+crmAssetType = 'cash'
+yesterdayExcess = 0
+crmExcessArray = []
+crmCapital = 10000
+startingcrmCapital = crmCapital
+crmSharesOwned = 0
+crmDf.insert(2,'Balance',crmCapital)
+#What percent you need to reach to initiate buy
+percentOfRollingDown=0.9 #0.9 !!! DO NOT SET TO 1 !!!
+#What percent the price needs to go up for you to actually sell now
+dropSafeDown=0.85 #0.85
+#What percent you need to reach to initiate sell
+percentOfRollingUp=1.1 #1.1 !!! DO NOT SET TO 1 !!!
+#What percent the price needs to go up for you to actually buy now
+dropSafeUp=1.15 #1.15
+crmBuyCount = 0
+crmSellCount = 0
+
+for x in range(29,len(crmDf)):
+    if(crmAssetType=='cash'):
+        #Todays close = todays Close
+        todayClose=crmDf['Close'].loc[x]
+        crmDf['Balance'][x]=crmCapital
+        #Todays 30avg = todays 30avg
+        today30=crmDf['crm30'].loc[x]
+        #If todays Close is 10% more than the 30 day mean initiate buy
+        if(todayClose <= today30*percentOfRollingDown):
+            #Excess is the ammount you closed at minus 10% of the rolling avg
+            todayExcess = (today30*percentOfRollingDown)-todayClose
+            crmExcessArray.append(todayExcess)
+            if(todayExcess < max(crmExcessArray)*dropSafeUp):
+                crmSharesOwned=(crmCapital/todayClose)
+                #print("   SPENT " + str(locale.currency(crmCapital,grouping=True)) + " for  " + str(crmSharesOwned.round(2)) + " shares " + str(x))
+                crmCapital=0
+                crmAssetType='stocks'
+                crmExcessArray = []
+                crmBuyCount+=1
+    else:
+                                        #Todays close = todays Close
+        todayClose=crmDf['Close'].loc[x]
+        crmDf['Balance'][x]=crmSharesOwned*todayClose                                                                                 #Todays 30avg = todays 30avg
+        today30=crmDf['crm30'].loc[x]                                     #If todays Close is 10% more than the 30 day mean initiate sell
+        if(todayClose <= today30*percentOfRollingUp):
+                                                                                    #Excess is the ammount you closed at minus 110% of the rolling avg
+            todayExcess = todayClose-(today30*percentOfRollingUp)
+            crmExcessArray.append(todayExcess)
+            if(todayExcess > min(crmExcessArray)*dropSafeDown):
+                crmCapital = (todayClose*crmSharesOwned)
+                #print("RETURNED " + str(locale.currency(crmCapital,grouping=True)) + " from " + str(crmSharesOwned.round(2))+" shares " + str(x))
+                crmSharesOwned=0
+                crmAssetType='cash'
+                crmExcessArray = []  
+                crmSellCount += 1
+
+balanceX=[]
+for x in crmDf['Date']:
+    balanceX.append(x)
+
+balanceY = []
+for x in crmDf['Balance']:
+    balanceY.append(x)
+    
+#plt.plot(balanceX,balanceY,label='crm')
+
+###############################amzn
+amznDf = pd.read_csv('amzn.csv')
+amznDf['amzn30'] = amznDf['Close'].rolling(window = 30).mean().round(2)
+amznAssetType = 'cash'
+yesterdayExcess = 0
+amznExcessArray = []
+amznCapital = 10000
+startingamznCapital = amznCapital
+amznSharesOwned = 0
+amznDf.insert(2,'Balance',amznCapital)
+#What percent you need to reach to initiate buy
+percentOfRollingDown=0.9 #0.9 !!! DO NOT SET TO 1 !!!
+#What percent the price needs to go up for you to actually sell now
+dropSafeDown=0.85 #0.85
+#What percent you need to reach to initiate sell
+percentOfRollingUp=1.1 #1.1 !!! DO NOT SET TO 1 !!!
+#What percent the price needs to go up for you to actually buy now
+dropSafeUp=1.15 #1.15
+amznBuyCount = 0
+amznSellCount = 0
+
+for x in range(29,len(amznDf)):
+    if(amznAssetType=='cash'):
+        #Todays close = todays Close
+        todayClose=amznDf['Close'].loc[x]
+        amznDf['Balance'][x]=amznCapital
+        #Todays 30avg = todays 30avg
+        today30=amznDf['amzn30'].loc[x]
+        #If todays Close is 10% more than the 30 day mean initiate buy
+        if(todayClose <= today30*percentOfRollingDown):
+            #Excess is the ammount you closed at minus 10% of the rolling avg
+            todayExcess = (today30*percentOfRollingDown)-todayClose
+            amznExcessArray.append(todayExcess)
+            if(todayExcess < max(amznExcessArray)*dropSafeUp):
+                amznSharesOwned=(amznCapital/todayClose)
+                #print("   SPENT " + str(locale.currency(amznCapital,grouping=True)) + " for  " + str(amznSharesOwned.round(2)) + " shares " + str(x))
+                amznCapital=0
+                amznAssetType='stocks'
+                amznExcessArray = []
+                amznBuyCount+=1
+    else:
+                                        #Todays close = todays Close
+        todayClose=amznDf['Close'].loc[x]
+        amznDf['Balance'][x]=amznSharesOwned*todayClose                                                                                 #Todays 30avg = todays 30avg
+        today30=amznDf['amzn30'].loc[x]                                     #If todays Close is 10% more than the 30 day mean initiate sell
+        if(todayClose <= today30*percentOfRollingUp):
+                                                                                    #Excess is the ammount you closed at minus 110% of the rolling avg
+            todayExcess = todayClose-(today30*percentOfRollingUp)
+            amznExcessArray.append(todayExcess)
+            if(todayExcess > min(amznExcessArray)*dropSafeDown):
+                amznCapital = (todayClose*amznSharesOwned)
+                #print("RETURNED " + str(locale.currency(amznCapital,grouping=True)) + " from " + str(amznSharesOwned.round(2))+" shares " + str(x))
+                amznSharesOwned=0
+                amznAssetType='cash'
+                amznExcessArray = []  
+                amznSellCount += 1
+
+balanceX=[]
+for x in amznDf['Date']:
+    balanceX.append(x)
+
+balanceY = []
+for x in amznDf['Balance']:
+    balanceY.append(x)
+    
+#plt.plot(balanceX,balanceY,label='amzn')
+
+###############################nlok
+# Located Uptop
+# nlokDf = pd.read_csv('nlok.csv')
+nlokDf['nlok30'] = nlokDf['Close'].rolling(window = 30).mean().round(2)
+nlokAssetType = 'cash'
+yesterdayExcess = 0
+nlokExcessArray = []
+nlokCapital = 10000
+startingnlokCapital = nlokCapital
+nlokSharesOwned = 0
+nlokDf.insert(2,'Balance',nlokCapital)
+#What percent you need to reach to initiate buy
+percentOfRollingDown=0.9 #0.9 !!! DO NOT SET TO 1 !!!
+#What percent the price needs to go up for you to actually sell now
+dropSafeDown=0.85 #0.85
+#What percent you need to reach to initiate sell
+percentOfRollingUp=1.1 #1.1 !!! DO NOT SET TO 1 !!!
+#What percent the price needs to go up for you to actually buy now
+dropSafeUp=1.15 #1.15
+nlokBuyCount = 0
+nlokSellCount = 0
+
+for x in range(29,len(nlokDf)):
+    if(nlokAssetType=='cash'):
+        #Todays close = todays Close
+        todayClose=nlokDf['Close'].loc[x]
+        nlokDf['Balance'][x]=nlokCapital
+        #Todays 30avg = todays 30avg
+        today30=nlokDf['nlok30'].loc[x]
+        #If todays Close is 10% more than the 30 day mean initiate buy
+        if(todayClose <= today30*percentOfRollingDown):
+            #Excess is the ammount you closed at minus 10% of the rolling avg
+            todayExcess = (today30*percentOfRollingDown)-todayClose
+            nlokExcessArray.append(todayExcess)
+            if(todayExcess < max(nlokExcessArray)*dropSafeUp):
+                nlokSharesOwned=(nlokCapital/todayClose)
+                #print("   SPENT " + str(locale.currency(nlokCapital,grouping=True)) + " for  " + str(nlokSharesOwned.round(2)) + " shares " + str(x))
+                nlokCapital=0
+                nlokAssetType='stocks'
+                nlokExcessArray = []
+                nlokBuyCount+=1
+    else:
+                                        #Todays close = todays Close
+        todayClose=nlokDf['Close'].loc[x]
+        nlokDf['Balance'][x]=nlokSharesOwned*todayClose                                                                                 #Todays 30avg = todays 30avg
+        today30=nlokDf['nlok30'].loc[x]                                     #If todays Close is 10% more than the 30 day mean initiate sell
+        if(todayClose <= today30*percentOfRollingUp):
+                                                                                    #Excess is the ammount you closed at minus 110% of the rolling avg
+            todayExcess = todayClose-(today30*percentOfRollingUp)
+            nlokExcessArray.append(todayExcess)
+            if(todayExcess > min(nlokExcessArray)*dropSafeDown):
+                nlokCapital = (todayClose*nlokSharesOwned)
+                #print("RETURNED " + str(locale.currency(nlokCapital,grouping=True)) + " from " + str(nlokSharesOwned.round(2))+" shares " + str(x))
+                nlokSharesOwned=0
+                nlokAssetType='cash'
+                nlokExcessArray = []  
+                nlokSellCount += 1
+
+balanceX=[]
+for x in nlokDf['Date']:
+    balanceX.append(x)
+
+balanceY = []
+for x in nlokDf['Balance']:
+    balanceY.append(x)
+    
+#plt.plot(balanceX,balanceY, label='nlok')
+
+AVERAGEFORALLTECH=[]
+
+for x in range(502):
+    numToAdd = (aaplDf['Balance'][x] + msftDf['Balance'][x] + nlokDf['Balance'][x] + crmDf['Balance'][x] + amznDf['Balance'][x])/5
+    AVERAGEFORALLTECH.append(numToAdd)
+
+dateHolder=[]
+for x in nlokDf['Date']:
+    dateHolder.append(x)
+    
+plt.plot(dateHolder,AVERAGEFORALLTECH,label='Tech')
+
+# plt.plot(dateHolder,AVERAGEFORALLTECH,label='THE REAL ALL')
+# plt.xticks(dateHolder,rotation=30)
+# plt.locator_params(axis='x',nbins=12)
+# plt.ylabel("Balance Average Tech Stocks")
+# plt.xlabel("Months(2)")
+# plt.title("Tech Market Average Balance")
+# plt.legend()
+# plt.figure(figsize=(30,20),dpi=60)
+# plt.show()
+
+
+#print("Over the course of " + str(len(msftDf['Close']))+ " days, you bought " + str(msftBuyCount) + " times and sold " + str(msftSellCount) + " times. \nYour money is currently held in " + msftAssetType + "\n")
+#print("You started with " + str(locale.currency((startingmsftCapital),grouping=True)) + "\nYou ended with   " + str(locale.currency((msftCapital),grouping=True)) + "\nYour profits are " + str(locale.currency((msftCapital-startingmsftCapital),grouping=True)))
+
+
+bdnDf = pd.read_csv('bdn.csv')
+
+cciDf = pd.read_csv('UPDATEDNOTORIGINAL.csv')
+# ccicciDf['apl30'] = cciDf['Close'].rolling(window = 30).mean().round(2)
+cciAssetType = 'cash'
+yesterdayExcess = 0
+cciExcessArray = []
+cciCapital = 10000
+startingcciCapital = cciCapital
+cciSharesOwned = 0
+# cciDf.insert(2,'Balance',cciCapital)
+#What percent you need to reach to initiate buy
+percentOfRollingDown=0.9 #0.9 !!! DO NOT SET TO 1 !!!
+#What percent the price needs to go up for you to actually sell now
+dropSafeDown=0.85 #0.85
+#What percent you need to reach to initiate sell
+percentOfRollingUp=1.1 #1.1 !!! DO NOT SET TO 1 !!!
+#What percent the price needs to go up for you to actually buy now
+dropSafeUp=1.15 #1.15
+cciBuyCount = 0
+cciSellCount = 0
+
+for x in range(29,len(cciDf)):
+    if(cciAssetType=='cash'):
+        #Todays close = todays Close
+        todayClose=cciDf['Close'].loc[x]
+        cciDf['Balance'][x]=cciCapital
+        #Todays 30avg = todays 30avg
+        today30=cciDf['apl30'].loc[x]
+        #If todays Close is 10% more than the 30 day mean initiate buy
+        if(todayClose <= today30*percentOfRollingDown):
+            #Excess is the ammount you closed at minus 10% of the rolling avg
+            todayExcess = (today30*percentOfRollingDown)-todayClose
+            cciExcessArray.append(todayExcess)
+            if(todayExcess < max(cciExcessArray)*dropSafeUp):
+                cciSharesOwned=(cciCapital/todayClose)
+                #print("   SPENT " + str(locale.currency(cciCapital,grouping=True)) + " for  " + str(cciSharesOwned.round(2)) + " shares " + str(x))
+                cciCapital=0
+                cciAssetType='stocks'
+                cciExcessArray = []
+                cciBuyCount+=1
+    else:
+                                        #Todays close = todays Close
+        todayClose=cciDf['Close'].loc[x]
+        cciDf['Balance'][x]=cciSharesOwned*todayClose                                                                                 #Todays 30avg = todays 30avg
+        today30=cciDf['apl30'].loc[x]                                     #If todays Close is 10% more than the 30 day mean initiate sell
+        if(todayClose <= today30*percentOfRollingUp):
+                                                                                    #Excess is the ammount you closed at minus 110% of the rolling avg
+            todayExcess = todayClose-(today30*percentOfRollingUp)
+            cciExcessArray.append(todayExcess)
+            if(todayExcess > min(cciExcessArray)*dropSafeDown):
+                cciCapital = (todayClose*cciSharesOwned)
+                #print("RETURNED " + str(locale.currency(cciCapital,grouping=True)) + " from " + str(cciSharesOwned.round(2))+" shares\n" + str(x))
+                cciSharesOwned=0
+                cciAssetType='cash'
+                cciExcessArray = []  
+                cciSellCount += 1
+
+balanceX=[]
+for x in bdnDf['Date']:
+    balanceX.append(x)
+
+balanceY = []
+for x in cciDf['Balance']:
+    balanceY.append(x)
+
+#plt.plot(balanceX,balanceY,label='cci')
+
+###############################pld
+pldDf = pd.read_csv('pld.csv')
+pldDf['pld30'] = pldDf['Close'].rolling(window = 30).mean().round(2)
+pldAssetType = 'cash'
+yesterdayExcess = 0
+pldExcessArray = []
+pldCapital = 10000
+startingpldCapital = pldCapital
+pldSharesOwned = 0
+pldDf.insert(2,'Balance',pldCapital)
+#What percent you need to reach to initiate buy
+percentOfRollingDown=0.9 #0.9 !!! DO NOT SET TO 1 !!!
+#What percent the price needs to go up for you to actually sell now
+dropSafeDown=0.85 #0.85
+#What percent you need to reach to initiate sell
+percentOfRollingUp=1.1 #1.1 !!! DO NOT SET TO 1 !!!
+#What percent the price needs to go up for you to actually buy now
+dropSafeUp=1.15 #1.15
+pldBuyCount = 0
+pldSellCount = 0
+
+for x in range(29,len(pldDf)):
+    if(pldAssetType=='cash'):
+        #Todays close = todays Close
+        todayClose=pldDf['Close'].loc[x]
+        pldDf['Balance'][x]=pldCapital
+        #Todays 30avg = todays 30avg
+        today30=pldDf['pld30'].loc[x]
+        #If todays Close is 10% more than the 30 day mean initiate buy
+        if(todayClose <= today30*percentOfRollingDown):
+            #Excess is the ammount you closed at minus 10% of the rolling avg
+            todayExcess = (today30*percentOfRollingDown)-todayClose
+            pldExcessArray.append(todayExcess)
+            if(todayExcess < max(pldExcessArray)*dropSafeUp):
+                pldSharesOwned=(pldCapital/todayClose)
+                #print("   SPENT " + str(locale.currency(pldCapital,grouping=True)) + " for  " + str(pldSharesOwned.round(2)) + " shares " + str(x))
+                pldCapital=0
+                pldAssetType='stocks'
+                pldExcessArray = []
+                pldBuyCount+=1
+    else:
+                                        #Todays close = todays Close
+        todayClose=pldDf['Close'].loc[x]
+        pldDf['Balance'][x]=pldSharesOwned*todayClose                                                                                 #Todays 30avg = todays 30avg
+        today30=pldDf['pld30'].loc[x]                                     #If todays Close is 10% more than the 30 day mean initiate sell
+        if(todayClose <= today30*percentOfRollingUp):
+                                                                                    #Excess is the ammount you closed at minus 110% of the rolling avg
+            todayExcess = todayClose-(today30*percentOfRollingUp)
+            pldExcessArray.append(todayExcess)
+            if(todayExcess > min(pldExcessArray)*dropSafeDown):
+                pldCapital = (todayClose*pldSharesOwned)
+                #print("RETURNED " + str(locale.currency(pldCapital,grouping=True)) + " from " + str(pldSharesOwned.round(2))+" shares " + str(x))
+                pldSharesOwned=0
+                pldAssetType='cash'
+                pldExcessArray = []  
+                pldSellCount += 1
+
+balanceX=[]
+for x in pldDf['Date']:
+    balanceX.append(x)
+
+balanceY = []
+for x in pldDf['Balance']:
+    balanceY.append(x)
+    
+#plt.plot(balanceX,balanceY,label='pld')
+
+###############################amt
+amtDf = pd.read_csv('amt.csv')
+amtDf['amt30'] = amtDf['Close'].rolling(window = 30).mean().round(2)
+amtAssetType = 'cash'
+yesterdayExcess = 0
+amtExcessArray = []
+amtCapital = 10000
+startingamtCapital = amtCapital
+amtSharesOwned = 0
+amtDf.insert(2,'Balance',amtCapital)
+#What percent you need to reach to initiate buy
+percentOfRollingDown=0.9 #0.9 !!! DO NOT SET TO 1 !!!
+#What percent the price needs to go up for you to actually sell now
+dropSafeDown=0.85 #0.85
+#What percent you need to reach to initiate sell
+percentOfRollingUp=1.1 #1.1 !!! DO NOT SET TO 1 !!!
+#What percent the price needs to go up for you to actually buy now
+dropSafeUp=1.15 #1.15
+amtBuyCount = 0
+amtSellCount = 0
+
+for x in range(29,len(amtDf)):
+    if(amtAssetType=='cash'):
+        #Todays close = todays Close
+        todayClose=amtDf['Close'].loc[x]
+        amtDf['Balance'][x]=amtCapital
+        #Todays 30avg = todays 30avg
+        today30=amtDf['amt30'].loc[x]
+        #If todays Close is 10% more than the 30 day mean initiate buy
+        if(todayClose <= today30*percentOfRollingDown):
+            #Excess is the ammount you closed at minus 10% of the rolling avg
+            todayExcess = (today30*percentOfRollingDown)-todayClose
+            amtExcessArray.append(todayExcess)
+            if(todayExcess < max(amtExcessArray)*dropSafeUp):
+                amtSharesOwned=(amtCapital/todayClose)
+                #print("   SPENT " + str(locale.currency(amtCapital,grouping=True)) + " for  " + str(amtSharesOwned.round(2)) + " shares " + str(x))
+                amtCapital=0
+                amtAssetType='stocks'
+                amtExcessArray = []
+                amtBuyCount+=1
+    else:
+                                        #Todays close = todays Close
+        todayClose=amtDf['Close'].loc[x]
+        amtDf['Balance'][x]=amtSharesOwned*todayClose                                                                                 #Todays 30avg = todays 30avg
+        today30=amtDf['amt30'].loc[x]                                     #If todays Close is 10% more than the 30 day mean initiate sell
+        if(todayClose <= today30*percentOfRollingUp):
+                                                                                    #Excess is the ammount you closed at minus 110% of the rolling avg
+            todayExcess = todayClose-(today30*percentOfRollingUp)
+            amtExcessArray.append(todayExcess)
+            if(todayExcess > min(amtExcessArray)*dropSafeDown):
+                amtCapital = (todayClose*amtSharesOwned)
+                #print("RETURNED " + str(locale.currency(amtCapital,grouping=True)) + " from " + str(amtSharesOwned.round(2))+" shares " + str(x))
+                amtSharesOwned=0
+                amtAssetType='cash'
+                amtExcessArray = []  
+                amtSellCount += 1
+
+balanceX=[]
+for x in amtDf['Date']:
+    balanceX.append(x)
+
+balanceY = []
+for x in amtDf['Balance']:
+    balanceY.append(x)
+    
+#plt.plot(balanceX,balanceY,label='amt')
+
+###############################eqc
+eqcDf = pd.read_csv('eqc.csv')
+eqcDf['eqc30'] = eqcDf['Close'].rolling(window = 30).mean().round(2)
+eqcAssetType = 'cash'
+yesterdayExcess = 0
+eqcExcessArray = []
+eqcCapital = 10000
+startingeqcCapital = eqcCapital
+eqcSharesOwned = 0
+eqcDf.insert(2,'Balance',eqcCapital)
+#What percent you need to reach to initiate buy
+percentOfRollingDown=0.9 #0.9 !!! DO NOT SET TO 1 !!!
+#What percent the price needs to go up for you to actually sell now
+dropSafeDown=0.85 #0.85
+#What percent you need to reach to initiate sell
+percentOfRollingUp=1.1 #1.1 !!! DO NOT SET TO 1 !!!
+#What percent the price needs to go up for you to actually buy now
+dropSafeUp=1.15 #1.15
+eqcBuyCount = 0
+eqcSellCount = 0
+
+for x in range(29,len(eqcDf)):
+    if(eqcAssetType=='cash'):
+        #Todays close = todays Close
+        todayClose=eqcDf['Close'].loc[x]
+        eqcDf['Balance'][x]=eqcCapital
+        #Todays 30avg = todays 30avg
+        today30=eqcDf['eqc30'].loc[x]
+        #If todays Close is 10% more than the 30 day mean initiate buy
+        if(todayClose <= today30*percentOfRollingDown):
+            #Excess is the ammount you closed at minus 10% of the rolling avg
+            todayExcess = (today30*percentOfRollingDown)-todayClose
+            eqcExcessArray.append(todayExcess)
+            if(todayExcess < max(eqcExcessArray)*dropSafeUp):
+                eqcSharesOwned=(eqcCapital/todayClose)
+                #print("   SPENT " + str(locale.currency(eqcCapital,grouping=True)) + " for  " + str(eqcSharesOwned.round(2)) + " shares " + str(x))
+                eqcCapital=0
+                eqcAssetType='stocks'
+                eqcExcessArray = []
+                eqcBuyCount+=1
+    else:
+                                        #Todays close = todays Close
+        todayClose=eqcDf['Close'].loc[x]
+        eqcDf['Balance'][x]=eqcSharesOwned*todayClose                                                                                 #Todays 30avg = todays 30avg
+        today30=eqcDf['eqc30'].loc[x]                                     #If todays Close is 10% more than the 30 day mean initiate sell
+        if(todayClose <= today30*percentOfRollingUp):
+                                                                                    #Excess is the ammount you closed at minus 110% of the rolling avg
+            todayExcess = todayClose-(today30*percentOfRollingUp)
+            eqcExcessArray.append(todayExcess)
+            if(todayExcess > min(eqcExcessArray)*dropSafeDown):
+                eqcCapital = (todayClose*eqcSharesOwned)
+                #print("RETURNED " + str(locale.currency(eqcCapital,grouping=True)) + " from " + str(eqcSharesOwned.round(2))+" shares " + str(x))
+                eqcSharesOwned=0
+                eqcAssetType='cash'
+                eqcExcessArray = []  
+                eqcSellCount += 1
+
+balanceX=[]
+for x in eqcDf['Date']:
+    balanceX.append(x)
+
+balanceY = []
+for x in eqcDf['Balance']:
+    balanceY.append(x)
+    
+#plt.plot(balanceX,balanceY,label='eqc')
+
+###############################bdn
+# Located Uptop
+# bdnDf = pd.read_csv('bdn.csv')
+bdnDf['bdn30'] = bdnDf['Close'].rolling(window = 30).mean().round(2)
+bdnAssetType = 'cash'
+yesterdayExcess = 0
+bdnExcessArray = []
+bdnCapital = 10000
+startingbdnCapital = bdnCapital
+bdnSharesOwned = 0
+bdnDf.insert(2,'Balance',bdnCapital)
+#What percent you need to reach to initiate buy
+percentOfRollingDown=0.9 #0.9 !!! DO NOT SET TO 1 !!!
+#What percent the price needs to go up for you to actually sell now
+dropSafeDown=0.85 #0.85
+#What percent you need to reach to initiate sell
+percentOfRollingUp=1.1 #1.1 !!! DO NOT SET TO 1 !!!
+#What percent the price needs to go up for you to actually buy now
+dropSafeUp=1.15 #1.15
+bdnBuyCount = 0
+bdnSellCount = 0
+
+for x in range(29,len(bdnDf)):
+    if(bdnAssetType=='cash'):
+        #Todays close = todays Close
+        todayClose=bdnDf['Close'].loc[x]
+        bdnDf['Balance'][x]=bdnCapital
+        #Todays 30avg = todays 30avg
+        today30=bdnDf['bdn30'].loc[x]
+        #If todays Close is 10% more than the 30 day mean initiate buy
+        if(todayClose <= today30*percentOfRollingDown):
+            #Excess is the ammount you closed at minus 10% of the rolling avg
+            todayExcess = (today30*percentOfRollingDown)-todayClose
+            bdnExcessArray.append(todayExcess)
+            if(todayExcess < max(bdnExcessArray)*dropSafeUp):
+                bdnSharesOwned=(bdnCapital/todayClose)
+                #print("   SPENT " + str(locale.currency(bdnCapital,grouping=True)) + " for  " + str(bdnSharesOwned.round(2)) + " shares " + str(x))
+                bdnCapital=0
+                bdnAssetType='stocks'
+                bdnExcessArray = []
+                bdnBuyCount+=1
+    else:
+                                        #Todays close = todays Close
+        todayClose=bdnDf['Close'].loc[x]
+        bdnDf['Balance'][x]=bdnSharesOwned*todayClose                                                                                 #Todays 30avg = todays 30avg
+        today30=bdnDf['bdn30'].loc[x]                                     #If todays Close is 10% more than the 30 day mean initiate sell
+        if(todayClose <= today30*percentOfRollingUp):
+                                                                                    #Excess is the ammount you closed at minus 110% of the rolling avg
+            todayExcess = todayClose-(today30*percentOfRollingUp)
+            bdnExcessArray.append(todayExcess)
+            if(todayExcess > min(bdnExcessArray)*dropSafeDown):
+                bdnCapital = (todayClose*bdnSharesOwned)
+                #print("RETURNED " + str(locale.currency(bdnCapital,grouping=True)) + " from " + str(bdnSharesOwned.round(2))+" shares " + str(x))
+                bdnSharesOwned=0
+                bdnAssetType='cash'
+                bdnExcessArray = []  
+                bdnSellCount += 1
+
+balanceX=[]
+for x in bdnDf['Date']:
+    balanceX.append(x)
+
+balanceY = []
+for x in bdnDf['Balance']:
+    balanceY.append(x)
+    
+#plt.plot(balanceX,balanceY, label='bdn')
+
+AVERAGEFORALLREALESTATE=[]
+for x in range(502):
+    numToAdd = (cciDf['Balance'][x] + pldDf['Balance'][x] + bdnDf['Balance'][x] + amtDf['Balance'][x] + eqcDf['Balance'][x])/5
+    AVERAGEFORALLREALESTATE.append(numToAdd)
+
+dateHolder=[]
+for x in bdnDf['Date']:
+    dateHolder.append(x)
+    
+plt.plot(dateHolder,AVERAGEFORALLREALESTATE,label='Real Estate')
+plt.xticks(dateHolder,rotation=30)
+plt.locator_params(axis='x',nbins=12)
+plt.legend()
+plt.title("30 Day Moving Average")
+plt.show()
+
+
+# plt.plot(dateHolder,AVERAGEFORALLREALESTATE,label='THE REAL ALL')
+# plt.xticks(dateHolder,rotation=30)
+# plt.locator_params(axis='x',nbins=12)
+# plt.ylabel("Balance Average Tech Stocks")
+# plt.xlabel("Months(2)")
+# plt.title("Real Estate Market Average Balance")
+# plt.legend()
+# plt.figure(figsize=(30,20),dpi=60)
+# plt.show()
+
+
+
+
+
+#print("Over the course of " + str(len(pldDf['Close']))+ " days, you bought " + str(pldBuyCount) + " times and sold " + str(pldSellCount) + " times. \nYour money is currently held in " + pldAssetType + "\n")
+#print("You started with " + str(locale.currency((startingpldCapital),grouping=True)) + "\nYou ended with   " + str(locale.currency((pldCapital),grouping=True)) + "\nYour profits are " + str(locale.currency((pldCapital-startingpldCapital),grouping=True)))

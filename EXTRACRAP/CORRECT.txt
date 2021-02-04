@@ -1,0 +1,58 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Dec 10 22:00:58 2020
+
+@author: Colin
+"""
+
+import pandas as pd
+
+Df = pd.read_csv('AAPL.csv')
+
+Df['apl30'] = Df['Close'].rolling(window = 30).mean().round(2)
+
+
+assetType = 'cash'
+
+yesterdayExcess = 0
+
+boughtOne = False
+
+excessArray = []
+holdArray = []
+
+for x in range(29,len(Df)):
+    if(assetType=='cash'):
+        #Todays close = todays Close
+        todayClose=Df['Close'].loc[x]
+        #Todays 30avg = todays 30avg
+        today30=Df['apl30'].loc[x]
+        #If todays Close is 10% more than the 30 day mean initiate sell
+        if(todayClose <= today30*.9):
+            #Excess is the ammount you closed at minus 10% of the rolling avg
+            todayExcess = (today30*0.9)-todayClose
+            excessArray.append(todayExcess)
+            if(todayExcess > min(excessArray)*1.15):
+                print("BUY on day " + str(x))
+                assetType='stocks'
+                excessArray = []
+    else:
+                                                                                #Todays close = todays Close
+        todayClose=Df['Close'].loc[x]
+                                                                                        #Todays 30avg = todays 30avg
+        today30=Df['apl30'].loc[x]                                     #If todays Close is 10% more than the 30 day mean initiate sell
+        if(todayClose <= today30*1.1):
+                                                                                    #Excess is the ammount you closed at minus 110% of the rolling avg
+            todayExcess = todayClose-(today30*1.1)
+            excessArray.append(todayExcess)
+            if(todayExcess < max(excessArray)*0.85):
+                print("SELL on day " + str(x))
+                assetType='cash'
+                excessArray = []
+
+        
+                
+                
+    
+    
+

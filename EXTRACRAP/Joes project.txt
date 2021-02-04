@@ -1,0 +1,101 @@
+Can convert from cash to stock or stock to cash. 
+
+You can not have stock and cash, all of one or other
+
+Trigger BUY Signal when market excess is down 15%
+
+
+Trigger SELL signal when market excess is up 15%
+
+
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Dec 10 22:00:58 2020
+
+@author: Colin
+"""
+
+import pandas as pd
+import locale
+locale.setlocale( locale.LC_ALL, '' )
+
+Df = pd.read_csv('AAPL.csv')
+
+Df['apl30'] = Df['Close'].rolling(window = 30).mean().round(2)
+
+
+assetType = 'cash'
+
+yesterdayExcess = 0
+
+boughtOne = False
+
+excessArray = []
+holdArray = []
+
+capital = 10000
+startingCapital = capital
+sharesOwned = 0
+
+#What percent you need to reach to initiate buy
+percentOfRollingDown=0.9 #0.9 !!! DO NOT SET TO 1 !!!
+
+#What percent the price needs to go up for you to actually sell now
+dropSafeDown=0.85 #0.85
+
+#What percent you need to reach to initiate sell
+percentOfRollingUp=1.1 #1.1 !!! DO NOT SET TO 1 !!!
+#What percent the price needs to go up for you to actually buy now
+dropSafeUp=1.15 #1.15
+
+
+buyCount = 0
+sellCount = 0
+
+for x in range(29,len(Df)):
+    if(assetType=='cash'):
+        #Todays close = todays Close
+        todayClose=Df['Close'].loc[x]
+        #Todays 30avg = todays 30avg
+        today30=Df['apl30'].loc[x]
+        #If todays Close is 10% more than the 30 day mean initiate buy
+        if(todayClose <= today30*percentOfRollingDown):
+            #Excess is the ammount you closed at minus 10% of the rolling avg
+            todayExcess = (today30*percentOfRollingDown)-todayClose
+            excessArray.append(todayExcess)
+            if(todayExcess < max(excessArray)*dropSafeUp):
+                sharesOwned=(capital/todayClose)
+                print("   SPENT " + str(locale.currency(capital,grouping=True)) + " for  " + str(sharesOwned.round(2)) + " shares " + str(x))
+                capital=0
+                assetType='stocks'
+                excessArray = []
+                buyCount+=1
+    else:
+                                                                                #Todays close = todays Close
+        todayClose=Df['Close'].loc[x]
+                                                                                        #Todays 30avg = todays 30avg
+        today30=Df['apl30'].loc[x]                                     #If todays Close is 10% more than the 30 day mean initiate sell
+        if(todayClose <= today30*percentOfRollingUp):
+                                                                                    #Excess is the ammount you closed at minus 110% of the rolling avg
+            todayExcess = todayClose-(today30*percentOfRollingUp)
+            excessArray.append(todayExcess)
+            if(todayExcess > min(excessArray)*dropSafeDown):
+                capital = (todayClose*sharesOwned)
+                print("RETURNED " + str(locale.currency(capital,grouping=True)) + " from " + str(sharesOwned.round(2))+" shares\n" + str(x))
+                sharesOwned=0
+                assetType='cash'
+                excessArray = []  
+                sellCount += 1
+
+
+
+print("Over the course of " + str(len(Df['Close']))+ " days, you bought " + str(buyCount) + " times and sold " + str(sellCount) + " times. \nYour money is currently held in " + assetType + "\n")
+print("You started with " + str(locale.currency((startingCapital),grouping=True)) + "\nYou ended with   " + str(locale.currency((capital),grouping=True)) + "\nYour profits are " + str(locale.currency((capital-startingCapital),grouping=True)))
+
+
+        
+                
+                
+    
+    
+
